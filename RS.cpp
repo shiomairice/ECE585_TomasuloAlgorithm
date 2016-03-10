@@ -10,8 +10,8 @@ RS::RS(){
     lat = 0;
     result = 0;
     resultReady = false;
-    Qj = 0;
-    Qk = 0;
+    Qj = 1;
+    Qk = 1;
     Vj = 0;
     Vk = 0;
 }
@@ -21,8 +21,8 @@ RS::RS(int OP){
     lat = 0;
     result = 0;
     resultReady = false;
-    Qj = 0;
-    Qk = 0;
+    Qj = 1;
+    Qk = 1;
     Vj = 0;
     Vk = 0;
 
