@@ -13,6 +13,7 @@ class RegStatus {
     // Methods
     public:
         RegStatus();
+        RegStatus(int);
 };
 
 

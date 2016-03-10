@@ -21,7 +21,7 @@ class RS {
     //**** Methods
     public:
         RS();
-        RS(int);
+        RS(int, int);
 };
 
 

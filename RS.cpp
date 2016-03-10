@@ -15,14 +15,14 @@ RS::RS(){
     Vj = 0;
     Vk = 0;
 }
-RS::RS(int OP){
+RS::RS(int OP, int RSoperandAvailable){
     busy = false;
     op = OP;
     lat = 0;
     result = 0;
     resultReady = false;
-    Qj = 1;
-    Qk = 1;
+    Qj = RSoperandAvailable;
+    Qk = RSoperandAvailable;
     Vj = 0;
     Vk = 0;
 
