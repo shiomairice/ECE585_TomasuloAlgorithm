@@ -6,7 +6,7 @@
 #define TOMASULO_RS_H
 
 
-class RS {
+class ReservationStation {
     public:
         bool busy;
         int Qj;
@@ -23,8 +23,8 @@ class RS {
 
     //**** Methods
     public:
-        RS();
-        RS(int, int);
+        ReservationStation();
+        ReservationStation(int, int);
 };
 
 

@@ -7,7 +7,8 @@
             Start:  03-01-2016
             Update: 03-08-2016
             Update: 03-09-2016
-            Update: 03-09-2016
+            final:  03-10-2016
+
   Purpose:  ECE 585 Tomasulo Algorithm
             Driver file for Tomasulo algorithm
 ######################################################################################################################
@@ -72,16 +73,15 @@ ALGORITHM:
 #include <iostream>
 #include <iomanip>          // Print Table Formatting
 #include <vector>
-#include "RS.h"             // Reservation Station Class
+#include "ReservationStation.h"
 #include "Instruction.h"    // MIPS Style Instruction Class
-#include "RegStatus.h"      // Register Status Class (Shows which RS the given register is waiting for)
+#include "RegisterStatus.h"
 
 using namespace std;
 
 //####################################################################################################################
 //*** Define Architecture
 // RESERVATION STATION NUMBER
-const int Num_Total_RS = 9;
 const int Num_ADD_RS = 4;
 const int Num_MULT_RS = 2;
 const int Num_DIV_RS = 3;
@@ -95,7 +95,6 @@ const int WRITEBACK_Lat = 1;
 // Global Clock
 int Clock = 0;
 bool Done = true;
-const int numInst = 5;
 // Opcode Values
 const int AddOp = 0;
 const int SubOp = 1;
@@ -104,6 +103,7 @@ const int DivOp = 3;
 // Counter for current instruction to issue
 int currentInst_ISSUE = 0;
 // Temporary fix for errors due to RS names being numbers -> errors with REG/RS/REGSTATUS == zero
+const int ZERO_REG = 5000;
 const int RegStatusEmpty = 1000;
 const int OperandAvailable = 1001;
 const int OperandInit = 1002;
@@ -111,12 +111,12 @@ const int OperandInit = 1002;
 
 //####################################################################################################################
 // Driver Functions
-int ISSUE(vector<Instruction>& Inst,vector<RS>& ResStat,vector<RegStatus>& RegStat,vector<int>& Register);
-void EXECUTE(vector<Instruction>& Inst,vector<RS>& ResStat,vector<RegStatus>& RegStat,vector<int>& Register);
-void WRITEBACK(vector<Instruction>& Inst,vector<RS>& ResStat,vector<RegStatus>& RegStat,vector<int>& Register);
+int ISSUE(vector<Instruction>& Inst, vector<ReservationStation>& ResStat, vector<RegisterStatus>& RegStat, vector<int>& Register);
+void EXECUTE(vector<Instruction>& Inst, vector<ReservationStation>& ResStat, vector<RegisterStatus>& RegStat, vector<int>& Register);
+void WRITEBACK(vector<Instruction>& Inst, vector<ReservationStation>& ResStat, vector<RegisterStatus>& RegStat, vector<int>& Register);
 // Helper functions
-void printRegisterStatus(vector<RegStatus> RegisterStatusVector);
-void printReservationStations(vector<RS> ReservationStationsVector);
+void printRegisterStatus(vector<RegisterStatus> RegisterStatusVector);
+void printReservationStations(vector<ReservationStation> ReservationStationsVector);
 void printRegisters(vector<int> RegistersVector);
 void printInstructions(vector<Instruction> InstructionsVector);
 void printTimingTable(vector<Instruction> INST);
@@ -127,20 +127,49 @@ void printTimingTable(vector<Instruction> INST);
 int main(){
     //**** START Define Architecture
     // Input program instructions
-    Instruction I0(1,2,3,AddOp),I1(4,1,5,AddOp),I2(6,7,8,SubOp),I3(9,4,10,MultOp),I4(11,12,6,DivOp);
-    vector<Instruction> Inst = {I0,I1,I2,I3,I4};
-    // Define # of each type of reservation station
-    RS ADD1(AddOp,OperandInit),ADD2(AddOp,OperandInit),ADD3(AddOp,OperandInit),ADD4(AddOp,OperandInit);
-    RS MULT1(MultOp,OperandInit),MULT2(MultOp,OperandInit);
-    RS DIV1(DivOp,OperandInit),DIV2(DivOp,OperandInit),DIV3(DivOp,OperandInit);
-    vector<RS> ResStation = {ADD1,ADD2,ADD3,ADD4,MULT1,MULT2,DIV1,DIV2,DIV3};
-    // Initialize register status vector
-    RegStatus F0(RegStatusEmpty),F1(RegStatusEmpty),F2(RegStatusEmpty),F3(RegStatusEmpty),F4(RegStatusEmpty),
+    Instruction
+            //(rd,rs,rt,opcode)
+            I0(1,2,3,AddOp),
+            I1(4,1,5,AddOp),
+            I2(6,7,8,SubOp),
+            I3(9,4,10,MultOp),
+            I4(11,12,6,DivOp),
+            I5(8,1,5,MultOp),
+            I6(7,2,3,MultOp);
+    // Pack Instructions into vector
+    vector<Instruction> Inst = {I0,I1,I2,I3,I4,I5,I6};
+
+    //// Input reservation station architecture
+    // DONT FORGET TO UPDATE ^
+    // RESERVATION STATION NUMBERS
+    //const int Num_ADD_RS = 4;
+    //const int Num_MULT_RS = 2;
+    //const int Num_DIV_RS = 3;
+    ReservationStation
+            ADD1(AddOp, OperandInit),
+            ADD2(AddOp, OperandInit),
+            ADD3(AddOp, OperandInit),
+            ADD4(AddOp, OperandInit);
+    ReservationStation
+            MULT1(MultOp, OperandInit),
+            MULT2(MultOp, OperandInit);
+    ReservationStation
+            DIV1(DivOp, OperandInit),
+            DIV2(DivOp, OperandInit),
+            DIV3(DivOp, OperandInit);
+    // Pack reservation stations into vector
+    vector<ReservationStation> ResStation = {ADD1, ADD2, ADD3, ADD4, MULT1, MULT2, DIV1, DIV2, DIV3};
+
+    // Initialize register status objects
+    RegisterStatus
+            F0(RegStatusEmpty),F1(RegStatusEmpty),F2(RegStatusEmpty),F3(RegStatusEmpty),F4(RegStatusEmpty),
             F5(RegStatusEmpty),F6(RegStatusEmpty),F7(RegStatusEmpty),F8(RegStatusEmpty),F9(RegStatusEmpty),
             F10(RegStatusEmpty),F11(RegStatusEmpty),F12(RegStatusEmpty);
-    vector<RegStatus> RegisterStatus = {F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12};
-    // Initialze register vector
-    vector<int> Register = {5000,1,2,3,4,5,6,7,8,9,10,11,12};
+    // Pack register status objects into vector
+    vector<RegisterStatus> RegisterStatus = {F0, F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12};
+
+    // Initialize register file vector
+    vector<int> Register = {ZERO_REG,1,2,3,4,5,6,7,8,9,10,11,12};
     //**** END Define Architecture
 
     cout << "INITIAL VALUES:" << endl;
@@ -153,7 +182,7 @@ int main(){
     //**** START functional loop
     do{
         // Datapath
-        Clock++;
+        Clock++; // system clock
 
         ISSUE(Inst,ResStation,RegisterStatus,Register);
 		EXECUTE(Inst,ResStation,RegisterStatus,Register);
@@ -173,19 +202,21 @@ int main(){
             }
         }
 	}while(!Done);//**** End functional loop
+
+    return 0;
 }//**** END MAIN DRIVER
 //####################################################################################################################
 
 //####################################################################################################################
 // Datapath FUNCTIONS
-int ISSUE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& REGSTATUS,vector<int>& REG){
+int ISSUE(vector<Instruction>& INST, vector<ReservationStation>& RESSTATION, vector<RegisterStatus>& REGSTATUS, vector<int>& REG){
     // Latency of 1 if issued
-    //Fetch
     //**** check if spot in given reservation station is available
     int r = 0;
+    bool rsFree = false;
     // r is the current instruction to be issued's operation code(add,sub,mult,div)
     // If all instructions have been issued then stop issueing for rest of program
-    if(currentInst_ISSUE > numInst)
+    if(currentInst_ISSUE > INST.size())
             return 0;
     r = INST[currentInst_ISSUE].op;
     // determine if there is an open RS of r type. if yes -> r = that open spot.
@@ -196,9 +227,14 @@ int ISSUE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& RE
                     r = i; // RS are definced 1 -> 10 rather than from 0
                     currentInst_ISSUE++;
                     RESSTATION[i].op = AddOp;
+                    rsFree = true;
                     break;
                 }
             }
+            // if instruction is not issued because no resercation stations are free exit ISSUE
+            // Initializaion is not necessary if instruction not issued
+            if(!rsFree)
+                return 1;
             break;
         case SubOp:
             for(int i=Num_ADD_RS-Num_ADD_RS;i<Num_ADD_RS;i++){
@@ -206,9 +242,12 @@ int ISSUE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& RE
                     r = i; // RS are definced 1 -> 10 rather than from 0
                     currentInst_ISSUE++;
                     RESSTATION[i].op = SubOp;
+                    rsFree = true;
                     break;
                 }
             }
+            if(!rsFree)
+                return 1;
             break;
         case MultOp:
             for(int i=Num_ADD_RS;i<Num_ADD_RS+Num_MULT_RS;i++){
@@ -216,9 +255,12 @@ int ISSUE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& RE
                     r = i; // RS are definced 1 -> 10 rather than from 0
                     currentInst_ISSUE++;
                     RESSTATION[i].op = MultOp;
+                    rsFree = true;
                     break;
                 }
             }
+            if(!rsFree)
+                return 1;
             break;
         case DivOp:
             for(int i=Num_ADD_RS+Num_MULT_RS;i<Num_ADD_RS+Num_MULT_RS+Num_DIV_RS;i++){
@@ -226,9 +268,12 @@ int ISSUE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& RE
                     r = i;// RS are definced 1 -> 10 rather than from 0
                     currentInst_ISSUE++;
                     RESSTATION[i].op = DivOp;
+                    rsFree = true;
                     break;
                 }
             }
+            if(!rsFree)
+                return 1;
             break;
         default:
             break;
@@ -261,12 +306,12 @@ int ISSUE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& RE
     INST[currentInst_ISSUE-1].issueClock = Clock;
     // The register status Qi is set to the current instructions reservation station location r
     REGSTATUS[INST[currentInst_ISSUE-1].rd].Qi = r;
-    return 1;
+    return 2;
 }//END ISSUE()
-void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& REGSTATUS,vector<int>& REG){
+void EXECUTE(vector<Instruction>& INST, vector<ReservationStation>& RESSTATION, vector<RegisterStatus>& REGSTATUS, vector<int>& REG){
     // check each reservation station to see if both operands are ready
     // The current reservation station is r
-    for (int r=0;r<Num_Total_RS;r++){
+    for (int r=0;r<RESSTATION.size();r++){
         // if both operands are available then execute given instructions operation
         // and set resultReady flag to true so that result can be written back to CDB
         // first check if instruction has been issued
@@ -337,9 +382,9 @@ void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>&
     }
 
 }//END EXECUTE()
-void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& REGSTATUS,vector<int>& REG){
+void WRITEBACK(vector<Instruction>& INST, vector<ReservationStation>& RESSTATION, vector<RegisterStatus>& REGSTATUS, vector<int>& REG){
     // Check each reservation station to see if operational delay is done -> result is ready
-    for(int r=0;r<Num_Total_RS;r++){
+    for(int r=0;r<RESSTATION.size();r++){
         // if result ready write back to CDB -> Register,and reservation stations
         if(RESSTATION[r].resultReady){
             // Before Writeback is available there must be a 1 cycle WB delay
@@ -349,7 +394,7 @@ void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus
                     INST[RESSTATION[r].instNum].writebackClock = Clock;
                 // Check if any registers (via the registerStatus) are waiting for current r result
                 for(int x=0;x<REG.size();x++) {
-                    // if RegStatus points to the given reservation station r set that register[x] equal to executed result
+                    // if RegisterStatus points to the given reservation station r set that register[x] equal to executed result
                     if (REGSTATUS[x].Qi == r) {
                         // Write back to Registers
                         REG[x] = RESSTATION[r].result;
@@ -357,7 +402,7 @@ void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus
                     }
                 }
                 // Check if any reservation stations are waiting for current r result
-                for(int y=0;y<Num_Total_RS;y++){
+                for(int y=0;y<RESSTATION.size();y++){
                     // check if any reservation stations are waiting for the given result as an operand
                     // Write back to reservation stations
                     // Given RS is not longer waiting for this operand value
@@ -389,13 +434,13 @@ void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus
 
 //####################################################################################################################
 // Helper Functions
-void printRegisterStatus(vector<RegStatus> RegisterStatusVector){
+void printRegisterStatus(vector<RegisterStatus> RegisterStatusVector){
     cout << "Register Status: " << endl;
     for(int i=0; i<RegisterStatusVector.size(); i++)
         cout << RegisterStatusVector[i].Qi << ' ';
     cout << endl;
 }
-void printReservationStations(vector<RS> ReservationStationsVector){
+void printReservationStations(vector<ReservationStation> ReservationStationsVector){
     for(int i=0; i<ReservationStationsVector.size(); i++)
         cout << "RS #: " << i << "  Busy: " << ReservationStationsVector[i].busy << "  op: " <<
                 ReservationStationsVector[i].op << "  Vj: " << ReservationStationsVector[i].Vj << "  Vk: " <<
@@ -432,7 +477,7 @@ void printTimingTable(vector<Instruction> INST){
     cout << endl;
     // Define Row Labels and values
     for(int i=0;i<INST.size();i++){
-        cout << left  << setw(width) << setfill(separator) << "I";
+        cout << left  << setw(width) << setfill(separator) << i;
         cout << left << setw(width) << setfill(separator) << INST[i].issueClock;
         cout << INST[i].executeClockBegin <<  "-";
         cout << left << setw(width) << setfill(separator)  << INST[i].executeClockEnd;

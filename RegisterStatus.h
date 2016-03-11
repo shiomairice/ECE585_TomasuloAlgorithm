@@ -6,14 +6,14 @@
 #define TOMASULO_REGSTATUS_H
 
 
-class RegStatus {
+class RegisterStatus {
     public:
         bool busy;
         int Qi;
     // Methods
     public:
-        RegStatus();
-        RegStatus(int);
+        RegisterStatus();
+        RegisterStatus(int);
 };
 
 

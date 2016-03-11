@@ -2,9 +2,9 @@
 // Created by aj on 3/8/16.
 //
 
-#include "RS.h"
+#include "ReservationStation.h"
 
-RS::RS(){
+ReservationStation::ReservationStation(){
     busy = false;
     op = 0;
     lat = 0;
@@ -18,7 +18,7 @@ RS::RS(){
     ISSUE_Lat = 0;
     WRITEBACK_Lat = 0;
 }
-RS::RS(int OP, int RSoperandAvailable){
+ReservationStation::ReservationStation(int OP, int RSoperandAvailable){
     busy = false;
     op = OP;
     lat = 0;
