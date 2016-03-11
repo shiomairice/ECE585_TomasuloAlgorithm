@@ -264,76 +264,77 @@ void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>&
     for (int r=0;r<Num_Total_RS;r++){
         // if both operands are available then execute given instructions operation
         // and set resultReady flag to true so that result can be written back to CDB
-        if(RESSTATION[r].Qj == OperandAvailable && RESSTATION[r].Qk == OperandAvailable){
-            // if the instruction operands are available
-            // 1. they were available at ISSUE and there is a one clock delay from ISSUE
-            // 2. they have become avialable via the WRITEBACK and there is still a one clock delay
-            if(RESSTATION[r].ISSUE_Lat == ISSUE_Lat){
-                // Set clock cycle when execution begins
-                if(INST[RESSTATION[r].instNum].executeClockBegin == 0)
-                    INST[RESSTATION[r].instNum].executeClockBegin = Clock;
-                // when execution starts we must wait the given latency number of clock cycles before making result
-                // available to WriteBack
-                // Delay: Switch(INST.op)
-                //		case(add): 	clock += 4;
-                //		case(mult): 	clock += 12;
-                //		case(div):	clock += 38;
-                RESSTATION[r].lat++;
-                switch(RESSTATION[r].op){
-                    case(AddOp):
-                        if(RESSTATION[r].lat == ADD_Lat){
-                            RESSTATION[r].result = RESSTATION[r].Vj + RESSTATION[r].Vk;
-                            cout << "ADD result: " << RESSTATION[r].result << endl;
-                            RESSTATION[r].resultReady = true; // Result is ready to be writenback
-                            RESSTATION[r].lat = 0;
-                            // Set clock cycle when execution ends
-                            INST[RESSTATION[r].instNum].executeClockEnd = Clock;
-                            // reset ISSUE latency for RS
-                            RESSTATION[r].ISSUE_Lat = 0;
-                        }
-                    case(SubOp):
-                        if(RESSTATION[r].lat == ADD_Lat){
-                            RESSTATION[r].result = RESSTATION[r].Vj - RESSTATION[r].Vk;
-                            cout << "SUB result: " << RESSTATION[r].result << endl;
-                            RESSTATION[r].resultReady = true; // Result is ready to be writenback
-                            RESSTATION[r].lat = 0;
-                            // Set clock cycle when execution ends
-                            INST[RESSTATION[r].instNum].executeClockEnd = Clock;
-                            // reset ISSUE latency for RS
-                            RESSTATION[r].ISSUE_Lat = 0;
-                        }
-                    case(MultOp):
-                        if(RESSTATION[r].lat == MULT_Lat){
-                            cout << "RS (r):  " << r << endl;
-                            RESSTATION[r].result = RESSTATION[r].Vj * RESSTATION[r].Vk;
-                            cout << "MULT result: " << RESSTATION[r].result << endl;
-                            RESSTATION[r].resultReady = true; // Result is ready to be writenback
-                            cout << "MULT resultReady: " << RESSTATION[r].resultReady << endl;
-                            RESSTATION[r].lat = 0;
-                            // Set clock cycle when execution ends
-                            INST[RESSTATION[r].instNum].executeClockEnd = Clock;
-                            // reset ISSUE latency for RS
-                            RESSTATION[r].ISSUE_Lat = 0;
-                        }
-                    case(DivOp):
-                        if(RESSTATION[r].lat == DIV_Lat){
-                            RESSTATION[r].result = RESSTATION[r].Vj / RESSTATION[r].Vk;
-                            cout << "DIV result: " << RESSTATION[r].result << endl;
-                            RESSTATION[r].resultReady = true; // Result is ready to be writenback
-                            RESSTATION[r].lat = 0;
-                            // Set clock cycle when execution ends
-                            INST[RESSTATION[r].instNum].executeClockEnd = Clock;
-                            // reset ISSUE latency for RS
-                            RESSTATION[r].ISSUE_Lat = 0;
-                        }
-                    default:
-                        break;
+        // first check if instruction has been issued
+        if(RESSTATION[r].busy == true){
+            // second check if the ISSUE latency clock cycle has happened
+            if(RESSTATION[r].ISSUE_Lat >= ISSUE_Lat){
+                // third check if both operands are available
+                if(RESSTATION[r].Qj == OperandAvailable && RESSTATION[r].Qk == OperandAvailable){
+                    // Set clock cycle when execution begins
+                    if(INST[RESSTATION[r].instNum].executeClockBegin == 0)
+                        INST[RESSTATION[r].instNum].executeClockBegin = Clock;
+                    // when execution starts we must wait the given latency number of clock cycles before making result
+                    // available to WriteBack
+                    // Delay: Switch(INST.op)
+                    //		case(add): 	clock += 4;
+                    //		case(mult): 	clock += 12;
+                    //		case(div):	clock += 38;
+                    RESSTATION[r].lat++;
+                    switch(RESSTATION[r].op){
+                        case(AddOp):
+                            if(RESSTATION[r].lat == ADD_Lat){
+                                RESSTATION[r].result = RESSTATION[r].Vj + RESSTATION[r].Vk;
+                                cout << "ADD result: " << RESSTATION[r].result << endl;
+                                RESSTATION[r].resultReady = true; // Result is ready to be writenback
+                                RESSTATION[r].lat = 0;
+                                // Set clock cycle when execution ends
+                                INST[RESSTATION[r].instNum].executeClockEnd = Clock;
+                                // reset ISSUE latency for RS
+                                RESSTATION[r].ISSUE_Lat = 0;
+                            }
+                        case(SubOp):
+                            if(RESSTATION[r].lat == ADD_Lat){
+                                RESSTATION[r].result = RESSTATION[r].Vj - RESSTATION[r].Vk;
+                                cout << "SUB result: " << RESSTATION[r].result << endl;
+                                RESSTATION[r].resultReady = true; // Result is ready to be writenback
+                                RESSTATION[r].lat = 0;
+                                // Set clock cycle when execution ends
+                                INST[RESSTATION[r].instNum].executeClockEnd = Clock;
+                                // reset ISSUE latency for RS
+                                RESSTATION[r].ISSUE_Lat = 0;
+                            }
+                        case(MultOp):
+                            if(RESSTATION[r].lat == MULT_Lat){
+                                cout << "RS (r):  " << r << endl;
+                                RESSTATION[r].result = RESSTATION[r].Vj * RESSTATION[r].Vk;
+                                cout << "MULT result: " << RESSTATION[r].result << endl;
+                                RESSTATION[r].resultReady = true; // Result is ready to be writenback
+                                cout << "MULT resultReady: " << RESSTATION[r].resultReady << endl;
+                                RESSTATION[r].lat = 0;
+                                // Set clock cycle when execution ends
+                                INST[RESSTATION[r].instNum].executeClockEnd = Clock;
+                                // reset ISSUE latency for RS
+                                RESSTATION[r].ISSUE_Lat = 0;
+                            }
+                        case(DivOp):
+                            if(RESSTATION[r].lat == DIV_Lat){
+                                RESSTATION[r].result = RESSTATION[r].Vj / RESSTATION[r].Vk;
+                                cout << "DIV result: " << RESSTATION[r].result << endl;
+                                RESSTATION[r].resultReady = true; // Result is ready to be writenback
+                                RESSTATION[r].lat = 0;
+                                // Set clock cycle when execution ends
+                                INST[RESSTATION[r].instNum].executeClockEnd = Clock;
+                                // reset ISSUE latency for RS
+                                RESSTATION[r].ISSUE_Lat = 0;
+                            }
+                        default:
+                            break;
+                    }
                 }
-            }
-                // Execute is not ready until one cycle latency of ISSUE
-            else
+            } else // Execute is not ready until one cycle latency of ISSUE
                 RESSTATION[r].ISSUE_Lat++;
         }
+
     }
 
 }//END EXECUTE()
@@ -342,48 +343,54 @@ void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus
     for(int r=0;r<Num_Total_RS;r++){
         // if result ready write back to CDB -> Register,and reservation stations
         if(RESSTATION[r].resultReady){
-            // set clock cycle when write back occured. (Must add one because increment happens after loop)
-            if(INST[RESSTATION[r].instNum].writebackClock == 0)
-                INST[RESSTATION[r].instNum].writebackClock = Clock;
-            cout << "resultReady True (r):  " << r << endl;
-            // Check if any registers (via the registerStatus) are waiting for current r result
-            for(int x=0;x<REG.size();x++) {
-                // if RegStatus points to the given reservation station r set that register[x] equal to executed result
-                if (REGSTATUS[x].Qi == r) {
-                    cout << "RegStatus points (Qi) to (r): " << x << endl;
-                    // Write back to Registers
-                    cout << "REG[x] before: " << REG[x] << endl;
-                    REG[x] = RESSTATION[r].result;
-                    cout << "REG[x] after: " << REG[x] << endl;
-                    cout << "x: " << x << endl;
-                    cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
-                    REGSTATUS[x].Qi = RegStatusEmpty;
-                    cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
+            // Before Writeback is available there must be a 1 cycle WB delay
+            if(RESSTATION[r].WRITEBACK_Lat == WRITEBACK_Lat){
+                // set clock cycle when write back occured. (Must add one because increment happens after loop)
+                if(INST[RESSTATION[r].instNum].writebackClock == 0)
+                    INST[RESSTATION[r].instNum].writebackClock = Clock;
+                cout << "resultReady True (r):  " << r << endl;
+                // Check if any registers (via the registerStatus) are waiting for current r result
+                for(int x=0;x<REG.size();x++) {
+                    // if RegStatus points to the given reservation station r set that register[x] equal to executed result
+                    if (REGSTATUS[x].Qi == r) {
+                        cout << "RegStatus points (Qi) to (r): " << x << endl;
+                        // Write back to Registers
+                        cout << "REG[x] before: " << REG[x] << endl;
+                        REG[x] = RESSTATION[r].result;
+                        cout << "REG[x] after: " << REG[x] << endl;
+                        cout << "x: " << x << endl;
+                        cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
+                        REGSTATUS[x].Qi = RegStatusEmpty;
+                        cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
+                    }
                 }
-            }
-            // Check if any reservation stations are waiting for current r result
-            for(int y=0;y<Num_Total_RS;y++){
+                // Check if any reservation stations are waiting for current r result
+                for(int y=0;y<Num_Total_RS;y++){
+                    cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
+                    // check if any reservation stations are waiting for the given result as an operand
+                    // Write back to reservation stations
+                    // Given RS is not longer waiting for this operand value
+                    if(RESSTATION[y].Qj==r){
+                        RESSTATION[y].Vj=RESSTATION[r].result;
+                        RESSTATION[y].Qj=OperandAvailable;
+                    }
+                    if(RESSTATION[y].Qk==r){
+                        RESSTATION[y].Vk=RESSTATION[r].result;
+                        RESSTATION[y].Qk=OperandAvailable;
+                    }
+                }
+                // The given reservation station can now be used again
+                RESSTATION[r].resultReady = false; // Set RS resultReady back to false
+                RESSTATION[r].busy = false;
+                RESSTATION[r].Qj = OperandInit;
+                RESSTATION[r].Qk = OperandInit;
+                RESSTATION[r].Vj = 0;
+                RESSTATION[r].Vk = 0;
+                RESSTATION[r].WRITEBACK_Lat = 0;
                 cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
-                // check if any reservation stations are waiting for the given result as an operand
-                // Write back to reservation stations
-                // Given RS is not longer waiting for this operand value
-                if(RESSTATION[y].Qj==r){
-                    RESSTATION[y].Vj=RESSTATION[r].result;
-                    RESSTATION[y].Qj=OperandAvailable;
-                }
-                if(RESSTATION[y].Qk==r){
-                    RESSTATION[y].Vk=RESSTATION[r].result;
-                    RESSTATION[y].Qk=OperandAvailable;
-                }
             }
-            // The given reservation station can now be used again
-            RESSTATION[r].resultReady = false; // Set RS resultReady back to false
-            RESSTATION[r].busy = false;
-            RESSTATION[r].Qj = OperandInit;
-            RESSTATION[r].Qk = OperandInit;
-            RESSTATION[r].Vj = 0;
-            RESSTATION[r].Vk = 0;
-            cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
+            else
+                RESSTATION[r].WRITEBACK_Lat++;
         }
     }
 
