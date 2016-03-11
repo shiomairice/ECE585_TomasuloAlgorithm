@@ -1,38 +1,30 @@
 /*
-  FileName: main.cpp
+######################################################################################################################
   Author:   Arthur J. Miller
-  Date:     03-09-2016
+  FileName: main.cpp
+  Full project can be found at github.com/milleraj66/ECE585_TomasuloAlgorithm
+  Date:
+            Start:  03-01-2016
+            Update: 03-08-2016
+            Update: 03-09-2016
+            Update: 03-09-2016
   Purpose:  ECE 585 Tomasulo Algorithm
             Driver file for Tomasulo algorithm
-  This program follows the algorithm as stated by;
-    Computer Architecture : A Quantitative Approach (5th Edition) by Hennessy, John L., Patterson, David A.
-    https://en.wikipedia.org/wiki/Tomasulo_algorithm#Implementation_concepts
-    Dr. Chandra CPP
-
-
-  Call Tomasulo()
-    inputs: ()
-    output: print clock cycle at below phases of each instruction AND Return final # clock cycles
-                ISSUE       EXECUTE     WRITEBACK
-
- include instruction class
-	INST(Operation)
- 		rd
- 		rs
- 		rt
- 		op
-
+######################################################################################################################
+This program follows the algorithm as stated by the following sources;
+Computer Architecture : A Quantitative Approach (5th Edition) by Hennessy, John L., Patterson, David A.
+https://en.wikipedia.org/wiki/Tomasulo_algorithm#Implementation_concepts
+Dr. Chandra CPP
 
 ALGORITHM:
-	// determine reservation station destination for given instruction
-	// r is the given reservation station	
-	Switch(INST.op):
+	ISSUE:
+		// DELAY: 1 Clock
+		// determine reservation station destination for given instruction
+	    // r is the given reservation station
+	    Switch(INST.op):
 		case(add):  r=add; 	goto ISSUE
 		case(mult): r= mult; 	goto ISSUE
 		case(div):  r = div;	goto ISSUE
-		
-	ISSUE:
-		// DELAY: 1 Clock
 		// check if spot in given reservation station is available
 		if(RS[r].busy = false):
 			// if operand rs is available -> set value of operand (Vj) to given register value
@@ -75,18 +67,17 @@ ALGORITHM:
 			RS[x].Vk=temp; RS[x].Qk=false;
 		// The given reservation station is can now be used again		
 		RS[r].busy = false;
-
-
  */
 
 #include <iostream>
 #include <vector>
-#include "RS.h"
-#include "Instruction.h"
-#include "RegStatus.h"
+#include "RS.h"             // Reservation Station Class
+#include "Instruction.h"    // MIPS Style Instruction Class
+#include "RegStatus.h"      // Register Status Class (Shows which RS the given register is waiting for)
 
 using namespace std;
 
+//####################################################################################################################
 //*** Define Architecture
 // RESERVATION STATION NUMBER
 const int Num_Total_RS = 9;
@@ -97,21 +88,22 @@ const int Num_DIV_RS = 3;
 const int ADD_Lat = 4;
 const int MULT_Lat = 12;
 const int DIV_Lat = 38;
-// Other global variables
+// Global Clock
 int Clock = 0;
-const int numInst = 5;
+// Opcode Values
 const int AddOp = 0;
 const int SubOp = 1;
 const int MultOp = 2;
 const int DivOp = 3;
+// Counter for current instruction to issue
 int currentInst_ISSUE = 0;
+// Temporary fix for errors due to RS names being numbers -> errors with REG/RS/REGSTATUS == zero
 const int RegStatusEmpty = 1000;
-const int OperandA = 1001;
+const int OperandAvailable = 1001;
 const int OperandInit = 1002;
+//####################################################################################################################
 
-
-
-
+//####################################################################################################################
 // Driver Functions
 int ISSUE(vector<Instruction>& Inst,vector<RS>& ResStat,vector<RegStatus>& RegStat,vector<int>& Register);
 void EXECUTE(vector<Instruction>& Inst,vector<RS>& ResStat,vector<RegStatus>& RegStat,vector<int>& Register);
@@ -121,8 +113,10 @@ void printRegisterStatus(vector<RegStatus> RegisterStatusVector);
 void printReservationStations(vector<RS> ReservationStationsVector);
 void printRegisters(vector<int> RegistersVector);
 void printInstructions(vector<Instruction> InstructionsVector);
+//####################################################################################################################
 
-//**** MAIN DRIVER
+//####################################################################################################################
+// MAIN DRIVER
 int main(){
     //**** START Define Architecture
     // Input program instructions
@@ -134,7 +128,9 @@ int main(){
     RS DIV1(DivOp,OperandInit),DIV2(DivOp,OperandInit),DIV3(DivOp,OperandInit);
     vector<RS> ResStation = {ADD1,ADD2,ADD3,ADD4,MULT1,MULT2,DIV1,DIV2,DIV3};
     // Initialize register status vector
-    RegStatus F0(RegStatusEmpty),F1(RegStatusEmpty),F2(RegStatusEmpty),F3(RegStatusEmpty),F4(RegStatusEmpty),F5(RegStatusEmpty),F6(RegStatusEmpty),F7(RegStatusEmpty),F8(RegStatusEmpty),F9(RegStatusEmpty),F10(RegStatusEmpty),F11(RegStatusEmpty),F12(RegStatusEmpty);
+    RegStatus F0(RegStatusEmpty),F1(RegStatusEmpty),F2(RegStatusEmpty),F3(RegStatusEmpty),F4(RegStatusEmpty),
+            F5(RegStatusEmpty),F6(RegStatusEmpty),F7(RegStatusEmpty),F8(RegStatusEmpty),F9(RegStatusEmpty),
+            F10(RegStatusEmpty),F11(RegStatusEmpty),F12(RegStatusEmpty);
     vector<RegStatus> RegisterStatus = {F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12};
     // Initialze register vector
     vector<int> Register = {5000,1,2,3,4,5,6,7,8,9,10,11,12};
@@ -175,15 +171,17 @@ int main(){
 
 	}//**** End functional loop
 }//**** END MAIN DRIVER
+//####################################################################################################################
 
-//**** FUNCTIONS FOR DRIVER
+//####################################################################################################################
+// Datapath FUNCTIONS
 int ISSUE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& REGSTATUS,vector<int>& REG){
     //Fetch
     //**** check if spot in given reservation station is available
     int r = 0;
     // r is the current instruction to be issued's operation code(add,sub,mult,div)
     // If all instructions have been issued then stop issueing for rest of program
-    if(currentInst_ISSUE > numInst)
+    if(currentInst_ISSUE > INST.size())
             return 0;
     r = INST[currentInst_ISSUE].op;
     // determine if there is an open RS of r type. if yes -> r = that open spot.
@@ -237,7 +235,7 @@ int ISSUE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& RE
     // NOTE: since currentInst was in incremented we must do currentINST_ISSUE-1
     if(REGSTATUS[INST[currentInst_ISSUE-1].rs].Qi == RegStatusEmpty){
         RESSTATION[r].Vj = REG[INST[currentInst_ISSUE-1].rs];
-        RESSTATION[r].Qj = OperandA;
+        RESSTATION[r].Qj = OperandAvailable;
     }
     else{
         RESSTATION[r].Qj = REGSTATUS[INST[currentInst_ISSUE-1].rs].Qi;
@@ -246,7 +244,7 @@ int ISSUE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& RE
     // else point operand to the reservation station (Qk) that will give the operand value
     if(REGSTATUS[INST[currentInst_ISSUE-1].rt].Qi == RegStatusEmpty){
         RESSTATION[r].Vk = REG[INST[currentInst_ISSUE-1].rt];
-        RESSTATION[r].Qk = OperandA;
+        RESSTATION[r].Qk = OperandAvailable;
     }
     else{
         RESSTATION[r].Qk = REGSTATUS[INST[currentInst_ISSUE-1].rt].Qi;
@@ -263,8 +261,9 @@ void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>&
     for (int r=0;r<Num_Total_RS;r++){
         // if both operands are available then execute given instructions operation
         // and set resultReady flag to true so that result can be written back to CDB
-        if(RESSTATION[r].Qj == OperandA && RESSTATION[r].Qk == OperandA){
-            // when execution starts we must wait the given latency number of clock cycles before making result availble to WB
+        if(RESSTATION[r].Qj == OperandAvailable && RESSTATION[r].Qk == OperandAvailable){
+            // when execution starts we must wait the given latency number of clock cycles before making result
+            // available to WriteBack
             // Delay: Switch(INST.op)
             //		case(add): 	clock += 4;
             //		case(mult): 	clock += 12;
@@ -332,11 +331,11 @@ void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus
                 // Given RS is not longer waiting for this operand value
                 if(RESSTATION[x].Qj==r){
                     RESSTATION[x].Vj=RESSTATION[r].result;
-                    RESSTATION[x].Qj=OperandA;
+                    RESSTATION[x].Qj=OperandAvailable;
                 }
                 if(RESSTATION[x].Qk==r){
                     RESSTATION[x].Vk=RESSTATION[r].result;
-                    RESSTATION[x].Qk=OperandA;
+                    RESSTATION[x].Qk=OperandAvailable;
                 }
             }
             // The given reservation station can now be used again
@@ -351,7 +350,10 @@ void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus
     if(WBclock>0)
         Clock++;
 }//END WRITEBACK()
+//####################################################################################################################
 
+//####################################################################################################################
+// Helper Functions
 void printRegisterStatus(vector<RegStatus> RegisterStatusVector){
     cout << "Register Status: " << endl;
     for(int i=0; i<RegisterStatusVector.size(); i++)
@@ -360,7 +362,10 @@ void printRegisterStatus(vector<RegStatus> RegisterStatusVector){
 }
 void printReservationStations(vector<RS> ReservationStationsVector){
     for(int i=0; i<ReservationStationsVector.size(); i++)
-        cout << "RS #: " << i << "  Busy: " << ReservationStationsVector[i].busy << "  op: " << ReservationStationsVector[i].op << "  Vj: " << ReservationStationsVector[i].Vj << "  Vk: " << ReservationStationsVector[i].Vk << "  Qj: " << ReservationStationsVector[i].Qj << "  Qk: " << ReservationStationsVector[i].Qk << endl;
+        cout << "RS #: " << i << "  Busy: " << ReservationStationsVector[i].busy << "  op: " <<
+                ReservationStationsVector[i].op << "  Vj: " << ReservationStationsVector[i].Vj << "  Vk: " <<
+                ReservationStationsVector[i].Vk << "  Qj: " << ReservationStationsVector[i].Qj << "  Qk: " <<
+                ReservationStationsVector[i].Qk << endl;
 }
 void printRegisters(vector<int> RegistersVector){
     cout << "Register Content:" << endl;
@@ -370,6 +375,8 @@ void printRegisters(vector<int> RegistersVector){
 }
 void printInstructions(vector<Instruction> InstructionsVector){
     for(int i=0; i<InstructionsVector.size(); i++)
-        cout << "Instruction #: " << i << "  Operation: " << InstructionsVector[i].op << "  " << InstructionsVector[i].rd << " <- " << InstructionsVector[i].rs << " op " << InstructionsVector[i].rt << endl;
+        cout << "Instruction #: " << i << "  Operation: " << InstructionsVector[i].op << "  " <<
+                InstructionsVector[i].rd << " <- " << InstructionsVector[i].rs << " op " <<
+                InstructionsVector[i].rt << endl;
 }
-
+//####################################################################################################################
