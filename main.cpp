@@ -144,30 +144,27 @@ int main(){
 
     cout << "INITIAL VALUES:" << endl;
     printInstructions(Inst);
+    printReservationStations(ResStation);
     printRegisters(Register);
     printRegisterStatus(RegisterStatus);
-    printReservationStations(ResStation);
     cout << endl;
 
     //**** START functional loop
     while(Clock < 50){
         // Datapath
         Clock++;
-        cout << "System Clock: " << endl;
-        cout << "Clock: " << Clock << endl;
 
         ISSUE(Inst,ResStation,RegisterStatus,Register);
 
 		EXECUTE(Inst,ResStation,RegisterStatus,Register);
 
 		WRITEBACK(Inst,ResStation,RegisterStatus,Register);
-        printInstructions(Inst);
+        // End Datapath
+
         printRegisters(Register);
-        printRegisterStatus(RegisterStatus);
-        printReservationStations(ResStation);
         printTimingTable(Inst);
+        cout << endl;
 	}//**** End functional loop
-    printRegisters(Register);
 }//**** END MAIN DRIVER
 //####################################################################################################################
 
@@ -284,7 +281,6 @@ void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>&
                         case(AddOp):
                             if(RESSTATION[r].lat == ADD_Lat){
                                 RESSTATION[r].result = RESSTATION[r].Vj + RESSTATION[r].Vk;
-                                cout << "ADD result: " << RESSTATION[r].result << endl;
                                 RESSTATION[r].resultReady = true; // Result is ready to be writenback
                                 RESSTATION[r].lat = 0;
                                 // Set clock cycle when execution ends
@@ -295,7 +291,6 @@ void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>&
                         case(SubOp):
                             if(RESSTATION[r].lat == ADD_Lat){
                                 RESSTATION[r].result = RESSTATION[r].Vj - RESSTATION[r].Vk;
-                                cout << "SUB result: " << RESSTATION[r].result << endl;
                                 RESSTATION[r].resultReady = true; // Result is ready to be writenback
                                 RESSTATION[r].lat = 0;
                                 // Set clock cycle when execution ends
@@ -305,11 +300,8 @@ void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>&
                             }
                         case(MultOp):
                             if(RESSTATION[r].lat == MULT_Lat){
-                                cout << "RS (r):  " << r << endl;
                                 RESSTATION[r].result = RESSTATION[r].Vj * RESSTATION[r].Vk;
-                                cout << "MULT result: " << RESSTATION[r].result << endl;
                                 RESSTATION[r].resultReady = true; // Result is ready to be writenback
-                                cout << "MULT resultReady: " << RESSTATION[r].resultReady << endl;
                                 RESSTATION[r].lat = 0;
                                 // Set clock cycle when execution ends
                                 INST[RESSTATION[r].instNum].executeClockEnd = Clock;
@@ -319,7 +311,6 @@ void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>&
                         case(DivOp):
                             if(RESSTATION[r].lat == DIV_Lat){
                                 RESSTATION[r].result = RESSTATION[r].Vj / RESSTATION[r].Vk;
-                                cout << "DIV result: " << RESSTATION[r].result << endl;
                                 RESSTATION[r].resultReady = true; // Result is ready to be writenback
                                 RESSTATION[r].lat = 0;
                                 // Set clock cycle when execution ends
@@ -348,25 +339,17 @@ void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus
                 // set clock cycle when write back occured. (Must add one because increment happens after loop)
                 if(INST[RESSTATION[r].instNum].writebackClock == 0)
                     INST[RESSTATION[r].instNum].writebackClock = Clock;
-                cout << "resultReady True (r):  " << r << endl;
                 // Check if any registers (via the registerStatus) are waiting for current r result
                 for(int x=0;x<REG.size();x++) {
                     // if RegStatus points to the given reservation station r set that register[x] equal to executed result
                     if (REGSTATUS[x].Qi == r) {
-                        cout << "RegStatus points (Qi) to (r): " << x << endl;
                         // Write back to Registers
-                        cout << "REG[x] before: " << REG[x] << endl;
                         REG[x] = RESSTATION[r].result;
-                        cout << "REG[x] after: " << REG[x] << endl;
-                        cout << "x: " << x << endl;
-                        cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
                         REGSTATUS[x].Qi = RegStatusEmpty;
-                        cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
                     }
                 }
                 // Check if any reservation stations are waiting for current r result
                 for(int y=0;y<Num_Total_RS;y++){
-                    cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
                     // check if any reservation stations are waiting for the given result as an operand
                     // Write back to reservation stations
                     // Given RS is not longer waiting for this operand value
@@ -387,7 +370,6 @@ void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus
                 RESSTATION[r].Vj = 0;
                 RESSTATION[r].Vk = 0;
                 RESSTATION[r].WRITEBACK_Lat = 0;
-                cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
             }
             else
                 RESSTATION[r].WRITEBACK_Lat++;
@@ -435,6 +417,8 @@ void printTimingTable(vector<Instruction> INST){
     cout << left << setw(width) << setfill(separator) << "Issue";
     cout << left << setw(width) << setfill(separator) << "Execute";
     cout << left << setw(width) << setfill(separator) << "WB";
+    cout << left << setw(width) << setfill(separator) << "SystemClock" << endl;
+    cout << right << setw(width*5) << setfill(separator) << Clock;
     cout << endl;
     cout << left << setw(lineWidth) << setfill(lineSeperator);
     cout << endl;
