@@ -91,6 +91,7 @@ const int MULT_Lat = 12;
 const int DIV_Lat = 38;
 // Global Clock
 int Clock = 0;
+const int numInst = 5;
 // Opcode Values
 const int AddOp = 0;
 const int SubOp = 1;
@@ -157,8 +158,11 @@ int main(){
 		EXECUTE(Inst,ResStation,RegisterStatus,Register);
 
 		WRITEBACK(Inst,ResStation,RegisterStatus,Register);
-
-        //printTimingTable(Inst);
+        printInstructions(Inst);
+        printRegisters(Register);
+        printRegisterStatus(RegisterStatus);
+        printReservationStations(ResStation);
+        printTimingTable(Inst);
 	}//**** End functional loop
     printRegisters(Register);
 }//**** END MAIN DRIVER
@@ -167,12 +171,13 @@ int main(){
 //####################################################################################################################
 // Datapath FUNCTIONS
 int ISSUE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& REGSTATUS,vector<int>& REG){
+    // Latency of 1 if issued
     //Fetch
     //**** check if spot in given reservation station is available
     int r = 0;
     // r is the current instruction to be issued's operation code(add,sub,mult,div)
     // If all instructions have been issued then stop issueing for rest of program
-    if(currentInst_ISSUE > INST.size())
+    if(currentInst_ISSUE > numInst)
             return 0;
     r = INST[currentInst_ISSUE].op;
     // determine if there is an open RS of r type. if yes -> r = that open spot.
@@ -245,9 +250,11 @@ int ISSUE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& RE
     // set reservation station instuction number == current instruction
     RESSTATION[r].instNum = currentInst_ISSUE-1;
     // set clock cycle for issue time
-    INST[r].issueClock = Clock;
+    INST[currentInst_ISSUE-1].issueClock = Clock;
     // The register status Qi is set to the current instructions reservation station location r
     REGSTATUS[INST[currentInst_ISSUE-1].rd].Qi = r;
+    // Latency
+    //Clock++;
 
     return 1;
 }//END ISSUE()
@@ -259,7 +266,8 @@ void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>&
         // and set resultReady flag to true so that result can be written back to CDB
         if(RESSTATION[r].Qj == OperandAvailable && RESSTATION[r].Qk == OperandAvailable){
             // Set clock cycle when execution begins
-            INST[RESSTATION[r].instNum].executeClockBegin = Clock;
+            if(INST[RESSTATION[r].instNum].executeClockBegin == 0)
+                INST[RESSTATION[r].instNum].executeClockBegin = Clock;
             // when execution starts we must wait the given latency number of clock cycles before making result
             // available to WriteBack
             // Delay: Switch(INST.op)
@@ -315,35 +323,41 @@ void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>&
 }//END EXECUTE()
 void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& REGSTATUS,vector<int>& REG){
     // Check each reservation station to see if operational delay is done -> result is ready
-    int WBclock = 0; // if we WRITEBACK then we need a clock delay of 1
     for(int r=0;r<Num_Total_RS;r++){
         // if result ready write back to CDB -> Register,and reservation stations
         if(RESSTATION[r].resultReady){
             // set clock cycle when write back occured. (Must add one because increment happens after loop)
-            INST[RESSTATION[r].instNum].writebackClock = Clock+1;
+            if(INST[RESSTATION[r].instNum].writebackClock == 0)
+                INST[RESSTATION[r].instNum].writebackClock = Clock+1;
             cout << "resultReady True (r):  " << r << endl;
-            // for all x registers
-            WBclock++; // There is a result being written back
-            for(int x=0;x<REG.size();x++){
+            // Check if any registers (via the registerStatus) are waiting for current r result
+            for(int x=0;x<REG.size();x++) {
                 // if RegStatus points to the given reservation station r set that register[x] equal to executed result
-                if(REGSTATUS[x].Qi==r){
+                if (REGSTATUS[x].Qi == r) {
                     cout << "RegStatus points (Qi) to (r): " << x << endl;
                     // Write back to Registers
                     cout << "REG[x] before: " << REG[x] << endl;
                     REG[x] = RESSTATION[r].result;
                     cout << "REG[x] after: " << REG[x] << endl;
+                    cout << "x: " << x << endl;
+                    cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
                     REGSTATUS[x].Qi = RegStatusEmpty;
+                    cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
                 }
+            }
+            // Check if any reservation stations are waiting for current r result
+            for(int y=0;y<Num_Total_RS;y++){
+                cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
                 // check if any reservation stations are waiting for the given result as an operand
                 // Write back to reservation stations
                 // Given RS is not longer waiting for this operand value
-                if(RESSTATION[x].Qj==r){
-                    RESSTATION[x].Vj=RESSTATION[r].result;
-                    RESSTATION[x].Qj=OperandAvailable;
+                if(RESSTATION[y].Qj==r){
+                    RESSTATION[y].Vj=RESSTATION[r].result;
+                    RESSTATION[y].Qj=OperandAvailable;
                 }
-                if(RESSTATION[x].Qk==r){
-                    RESSTATION[x].Vk=RESSTATION[r].result;
-                    RESSTATION[x].Qk=OperandAvailable;
+                if(RESSTATION[y].Qk==r){
+                    RESSTATION[y].Vk=RESSTATION[r].result;
+                    RESSTATION[y].Qk=OperandAvailable;
                 }
             }
             // The given reservation station can now be used again
@@ -353,11 +367,10 @@ void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus
             RESSTATION[r].Qk = OperandInit;
             RESSTATION[r].Vj = 0;
             RESSTATION[r].Vk = 0;
+            cout << "REGSTATUS[0]: " << REGSTATUS[0].Qi << endl;
         }
     }
-    // 1 cycle delay for WB
-    if(WBclock>0)
-        Clock++;
+
 }//END WRITEBACK()
 //####################################################################################################################
 
@@ -390,7 +403,7 @@ void printInstructions(vector<Instruction> InstructionsVector){
 }
 void printTimingTable(vector<Instruction> INST){
     char separator    = ' ';
-    const int width     = 4;
+    const int width     = 10;
     char lineSeperator = '-';
     const int lineWidth = 30;
 
@@ -404,10 +417,10 @@ void printTimingTable(vector<Instruction> INST){
     cout << endl;
     // Define Row Labels and values
     for(int i=0;i<INST.size();i++){
-        cout << left << setw(width) << setfill(separator) << "I" << i;
+        cout << left  << setw(width) << setfill(separator) << "I";
         cout << left << setw(width) << setfill(separator) << INST[i].issueClock;
-        cout << left << setw(width) << setfill(separator) << INST[i].executeClockBegin <<
-                "-" << INST[i].executeClockEnd;
+        cout << INST[i].executeClockBegin <<  "-";
+        cout << left << setw(width) << setfill(separator)  << INST[i].executeClockEnd;
         cout << left << setw(width) << setfill(separator) << INST[i].writebackClock;
         cout << endl;
     }
