@@ -98,7 +98,7 @@ const int ADD_Lat = 4;
 const int MULT_Lat = 12;
 const int DIV_Lat = 38;
 // Other global variables
-int Clock = 1;
+int Clock = 0;
 const int numInst = 5;
 const int AddOp = 0;
 const int SubOp = 1;
@@ -150,6 +150,10 @@ int main(){
         // Datapath
         //cout << "BEFORE ISSUE:" << endl;
         //cout << "Clock: " << Clock << endl;
+        // System Clock
+        Clock++;
+        cout << "System Clock: " << endl;
+        cout << "Clock: " << Clock << endl;
         ISSUE(Inst,ResStation,RegisterStatus,Register);
         cout << "AFTER ISSUE: " << endl;
         cout << "Clock: " << Clock << endl;
@@ -164,10 +168,6 @@ int main(){
         //printReservationStations(ResStation);
 		WRITEBACK(Inst,ResStation,RegisterStatus,Register);
         cout << "AFTER WRITEBACK: " << endl;
-        cout << "Clock: " << Clock << endl;
-        // System Clock
-        Clock++;
-        cout << "System Clock: " << endl;
         cout << "Clock: " << Clock << endl;
         printRegisters(Register);
         printRegisterStatus(RegisterStatus);
@@ -287,9 +287,11 @@ void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>&
                     }
                 case(MultOp):
                     if(RESSTATION[r].lat == MULT_Lat){
+                        cout << "RS (r):  " << r << endl;
                         RESSTATION[r].result = RESSTATION[r].Vj * RESSTATION[r].Vk;
                         cout << "MULT result: " << RESSTATION[r].result << endl;
                         RESSTATION[r].resultReady = true; // Result is ready to be writenback
+                        cout << "MULT resultReady: " << RESSTATION[r].resultReady << endl;
                         RESSTATION[r].lat = 0;
                     }
                 case(DivOp):
@@ -312,13 +314,17 @@ void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus
     for(int r=0;r<Num_Total_RS;r++){
         // if result ready write back to CDB -> Register,and reservation stations
         if(RESSTATION[r].resultReady){
+            cout << "resultReady True (r):  " << r << endl;
             // for all x registers
             WBclock++; // There is a result being written back
-            for(int x=0;x<Num_Total_RS;x++){
+            for(int x=0;x<REG.size();x++){
                 // if RegStatus points to the given reservation station r set that register[x] equal to executed result
                 if(REGSTATUS[x].Qi==r){
+                    cout << "RegStatus points (Qi) to (r): " << x << endl;
                     // Write back to Registers
+                    cout << "REG[x] before: " << REG[x] << endl;
                     REG[x] = RESSTATION[r].result;
+                    cout << "REG[x] after: " << REG[x] << endl;
                     REGSTATUS[x].Qi = RegStatusEmpty;
                 }
                 // check if any reservation stations are waiting for the given result as an operand
@@ -348,22 +354,22 @@ void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus
 
 void printRegisterStatus(vector<RegStatus> RegisterStatusVector){
     cout << "Register Status: " << endl;
-    for(int i=0; i<RegisterStatusVector.size(); ++i)
+    for(int i=0; i<RegisterStatusVector.size(); i++)
         cout << RegisterStatusVector[i].Qi << ' ';
     cout << endl;
 }
 void printReservationStations(vector<RS> ReservationStationsVector){
-    for(int i=0; i<ReservationStationsVector.size(); ++i)
+    for(int i=0; i<ReservationStationsVector.size(); i++)
         cout << "RS #: " << i << "  Busy: " << ReservationStationsVector[i].busy << "  op: " << ReservationStationsVector[i].op << "  Vj: " << ReservationStationsVector[i].Vj << "  Vk: " << ReservationStationsVector[i].Vk << "  Qj: " << ReservationStationsVector[i].Qj << "  Qk: " << ReservationStationsVector[i].Qk << endl;
 }
 void printRegisters(vector<int> RegistersVector){
     cout << "Register Content:" << endl;
-    for(int i=0; i<RegistersVector.size(); ++i)
+    for(int i=0; i<RegistersVector.size(); i++)
         cout << RegistersVector[i] << ' ';
     cout << endl;
 }
 void printInstructions(vector<Instruction> InstructionsVector){
-    for(int i=0; i<InstructionsVector.size(); ++i)
+    for(int i=0; i<InstructionsVector.size(); i++)
         cout << "Instruction #: " << i << "  Operation: " << InstructionsVector[i].op << "  " << InstructionsVector[i].rd << " <- " << InstructionsVector[i].rs << " op " << InstructionsVector[i].rt << endl;
 }
 
