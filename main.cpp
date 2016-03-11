@@ -94,6 +94,7 @@ const int ISSUE_Lat = 1;
 const int WRITEBACK_Lat = 1;
 // Global Clock
 int Clock = 0;
+bool Done = true;
 const int numInst = 5;
 // Opcode Values
 const int AddOp = 0;
@@ -150,21 +151,28 @@ int main(){
     cout << endl;
 
     //**** START functional loop
-    while(Clock < 50){
+    do{
         // Datapath
         Clock++;
 
         ISSUE(Inst,ResStation,RegisterStatus,Register);
-
 		EXECUTE(Inst,ResStation,RegisterStatus,Register);
-
 		WRITEBACK(Inst,ResStation,RegisterStatus,Register);
-        // End Datapath
 
+        // PRINT
         printRegisters(Register);
         printTimingTable(Inst);
         cout << endl;
-	}//**** End functional loop
+
+        // Check if all reservation stations are empty -> program done
+        Done = true;
+        for(int i=0;i<ResStation.size();i++){
+            if(ResStation[i].busy == 1){
+                Done = false;
+                break;
+            }
+        }
+	}while(!Done);//**** End functional loop
 }//**** END MAIN DRIVER
 //####################################################################################################################
 
