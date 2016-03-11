@@ -89,6 +89,9 @@ const int Num_DIV_RS = 3;
 const int ADD_Lat = 4;
 const int MULT_Lat = 12;
 const int DIV_Lat = 38;
+// Datapath Latency
+const int ISSUE_Lat = 1;
+const int WRITEBACK_Lat = 1;
 // Global Clock
 int Clock = 0;
 const int numInst = 5;
@@ -253,9 +256,6 @@ int ISSUE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& RE
     INST[currentInst_ISSUE-1].issueClock = Clock;
     // The register status Qi is set to the current instructions reservation station location r
     REGSTATUS[INST[currentInst_ISSUE-1].rd].Qi = r;
-    // Latency
-    //Clock++;
-
     return 1;
 }//END ISSUE()
 void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>& REGSTATUS,vector<int>& REG){
@@ -265,58 +265,74 @@ void EXECUTE(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus>&
         // if both operands are available then execute given instructions operation
         // and set resultReady flag to true so that result can be written back to CDB
         if(RESSTATION[r].Qj == OperandAvailable && RESSTATION[r].Qk == OperandAvailable){
-            // Set clock cycle when execution begins
-            if(INST[RESSTATION[r].instNum].executeClockBegin == 0)
-                INST[RESSTATION[r].instNum].executeClockBegin = Clock;
-            // when execution starts we must wait the given latency number of clock cycles before making result
-            // available to WriteBack
-            // Delay: Switch(INST.op)
-            //		case(add): 	clock += 4;
-            //		case(mult): 	clock += 12;
-            //		case(div):	clock += 38;
-            RESSTATION[r].lat++;
-            switch(RESSTATION[r].op){
-                case(AddOp):
-                    if(RESSTATION[r].lat == ADD_Lat){
-                        RESSTATION[r].result = RESSTATION[r].Vj + RESSTATION[r].Vk;
-                        cout << "ADD result: " << RESSTATION[r].result << endl;
-                        RESSTATION[r].resultReady = true; // Result is ready to be writenback
-                        RESSTATION[r].lat = 0;
-                        // Set clock cycle when execution ends
-                        INST[RESSTATION[r].instNum].executeClockEnd = Clock;
-                    }
-                case(SubOp):
-                    if(RESSTATION[r].lat == ADD_Lat){
-                        RESSTATION[r].result = RESSTATION[r].Vj - RESSTATION[r].Vk;
-                        cout << "SUB result: " << RESSTATION[r].result << endl;
-                        RESSTATION[r].resultReady = true; // Result is ready to be writenback
-                        RESSTATION[r].lat = 0;
-                        // Set clock cycle when execution ends
-                        INST[RESSTATION[r].instNum].executeClockEnd = Clock;
-                    }
-                case(MultOp):
-                    if(RESSTATION[r].lat == MULT_Lat){
-                        cout << "RS (r):  " << r << endl;
-                        RESSTATION[r].result = RESSTATION[r].Vj * RESSTATION[r].Vk;
-                        cout << "MULT result: " << RESSTATION[r].result << endl;
-                        RESSTATION[r].resultReady = true; // Result is ready to be writenback
-                        cout << "MULT resultReady: " << RESSTATION[r].resultReady << endl;
-                        RESSTATION[r].lat = 0;
-                        // Set clock cycle when execution ends
-                        INST[RESSTATION[r].instNum].executeClockEnd = Clock;
-                    }
-                case(DivOp):
-                    if(RESSTATION[r].lat == DIV_Lat){
-                        RESSTATION[r].result = RESSTATION[r].Vj / RESSTATION[r].Vk;
-                        cout << "DIV result: " << RESSTATION[r].result << endl;
-                        RESSTATION[r].resultReady = true; // Result is ready to be writenback
-                        RESSTATION[r].lat = 0;
-                        // Set clock cycle when execution ends
-                        INST[RESSTATION[r].instNum].executeClockEnd = Clock;
-                    }
-                default:
-                    break;
+            // if the instruction operands are available
+            // 1. they were available at ISSUE and there is a one clock delay from ISSUE
+            // 2. they have become avialable via the WRITEBACK and there is still a one clock delay
+            if(RESSTATION[r].ISSUE_Lat == ISSUE_Lat){
+                // Set clock cycle when execution begins
+                if(INST[RESSTATION[r].instNum].executeClockBegin == 0)
+                    INST[RESSTATION[r].instNum].executeClockBegin = Clock;
+                // when execution starts we must wait the given latency number of clock cycles before making result
+                // available to WriteBack
+                // Delay: Switch(INST.op)
+                //		case(add): 	clock += 4;
+                //		case(mult): 	clock += 12;
+                //		case(div):	clock += 38;
+                RESSTATION[r].lat++;
+                switch(RESSTATION[r].op){
+                    case(AddOp):
+                        if(RESSTATION[r].lat == ADD_Lat){
+                            RESSTATION[r].result = RESSTATION[r].Vj + RESSTATION[r].Vk;
+                            cout << "ADD result: " << RESSTATION[r].result << endl;
+                            RESSTATION[r].resultReady = true; // Result is ready to be writenback
+                            RESSTATION[r].lat = 0;
+                            // Set clock cycle when execution ends
+                            INST[RESSTATION[r].instNum].executeClockEnd = Clock;
+                            // reset ISSUE latency for RS
+                            RESSTATION[r].ISSUE_Lat = 0;
+                        }
+                    case(SubOp):
+                        if(RESSTATION[r].lat == ADD_Lat){
+                            RESSTATION[r].result = RESSTATION[r].Vj - RESSTATION[r].Vk;
+                            cout << "SUB result: " << RESSTATION[r].result << endl;
+                            RESSTATION[r].resultReady = true; // Result is ready to be writenback
+                            RESSTATION[r].lat = 0;
+                            // Set clock cycle when execution ends
+                            INST[RESSTATION[r].instNum].executeClockEnd = Clock;
+                            // reset ISSUE latency for RS
+                            RESSTATION[r].ISSUE_Lat = 0;
+                        }
+                    case(MultOp):
+                        if(RESSTATION[r].lat == MULT_Lat){
+                            cout << "RS (r):  " << r << endl;
+                            RESSTATION[r].result = RESSTATION[r].Vj * RESSTATION[r].Vk;
+                            cout << "MULT result: " << RESSTATION[r].result << endl;
+                            RESSTATION[r].resultReady = true; // Result is ready to be writenback
+                            cout << "MULT resultReady: " << RESSTATION[r].resultReady << endl;
+                            RESSTATION[r].lat = 0;
+                            // Set clock cycle when execution ends
+                            INST[RESSTATION[r].instNum].executeClockEnd = Clock;
+                            // reset ISSUE latency for RS
+                            RESSTATION[r].ISSUE_Lat = 0;
+                        }
+                    case(DivOp):
+                        if(RESSTATION[r].lat == DIV_Lat){
+                            RESSTATION[r].result = RESSTATION[r].Vj / RESSTATION[r].Vk;
+                            cout << "DIV result: " << RESSTATION[r].result << endl;
+                            RESSTATION[r].resultReady = true; // Result is ready to be writenback
+                            RESSTATION[r].lat = 0;
+                            // Set clock cycle when execution ends
+                            INST[RESSTATION[r].instNum].executeClockEnd = Clock;
+                            // reset ISSUE latency for RS
+                            RESSTATION[r].ISSUE_Lat = 0;
+                        }
+                    default:
+                        break;
+                }
             }
+                // Execute is not ready until one cycle latency of ISSUE
+            else
+                RESSTATION[r].ISSUE_Lat++;
         }
     }
 
@@ -328,7 +344,7 @@ void WRITEBACK(vector<Instruction>& INST,vector<RS>& RESSTATION,vector<RegStatus
         if(RESSTATION[r].resultReady){
             // set clock cycle when write back occured. (Must add one because increment happens after loop)
             if(INST[RESSTATION[r].instNum].writebackClock == 0)
-                INST[RESSTATION[r].instNum].writebackClock = Clock+1;
+                INST[RESSTATION[r].instNum].writebackClock = Clock;
             cout << "resultReady True (r):  " << r << endl;
             // Check if any registers (via the registerStatus) are waiting for current r result
             for(int x=0;x<REG.size();x++) {

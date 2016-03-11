@@ -15,6 +15,8 @@ RS::RS(){
     Vj = 0;
     Vk = 0;
     instNum = 100000;
+    ISSUE_Lat = 0;
+    WRITEBACK_Lat = 0;
 }
 RS::RS(int OP, int RSoperandAvailable){
     busy = false;
@@ -27,5 +29,7 @@ RS::RS(int OP, int RSoperandAvailable){
     Vj = 0;
     Vk = 0;
     instNum = 100000;
+    ISSUE_Lat = 0;
+    WRITEBACK_Lat = 0;
 
 }

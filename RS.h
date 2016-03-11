@@ -18,6 +18,8 @@ class RS {
         int result;
         bool resultReady;
         int instNum;
+        int ISSUE_Lat;
+        int WRITEBACK_Lat;
 
     //**** Methods
     public:
