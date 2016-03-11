@@ -14,6 +14,7 @@ RS::RS(){
     Qk = 1;
     Vj = 0;
     Vk = 0;
+    instNum = 100000;
 }
 RS::RS(int OP, int RSoperandAvailable){
     busy = false;
@@ -25,5 +26,6 @@ RS::RS(int OP, int RSoperandAvailable){
     Qk = RSoperandAvailable;
     Vj = 0;
     Vk = 0;
+    instNum = 100000;
 
 }

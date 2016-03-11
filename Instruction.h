@@ -12,6 +12,10 @@ class Instruction {
         int rs;
         int rt;
         int op; // add,sub,mult,div
+        int issueClock;
+        int executeClockBegin;
+        int executeClockEnd;
+        int writebackClock;
     //**** Class methods
     public:
         Instruction();

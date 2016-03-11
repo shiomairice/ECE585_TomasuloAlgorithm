@@ -17,6 +17,7 @@ class RS {
         int op;
         int result;
         bool resultReady;
+        int instNum;
 
     //**** Methods
     public:
