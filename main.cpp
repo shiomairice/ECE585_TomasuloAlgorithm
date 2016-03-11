@@ -196,12 +196,14 @@ int main(){
         // Check if all reservation stations are empty -> program done
         Done = true;
         for(int i=0;i<ResStation.size();i++){
+            cout << ResStation[i].busy << " ";
             if(ResStation[i].busy == 1){
                 Done = false;
                 break;
             }
         }
-	}while(!Done);//**** End functional loop
+        cout << endl;
+	}while(Clock<50);//**** End functional loop
 
     return 0;
 }//**** END MAIN DRIVER
@@ -300,6 +302,7 @@ int ISSUE(vector<Instruction>& INST, vector<ReservationStation>& RESSTATION, vec
     }
     // given reservation station is now busy until write back stage is completed.
     RESSTATION[r].busy = true;
+    RESSTATION[r].ISSUE_Lat = 0;
     // set reservation station instuction number == current instruction
     RESSTATION[r].instNum = currentInst_ISSUE-1;
     // set clock cycle for issue time
