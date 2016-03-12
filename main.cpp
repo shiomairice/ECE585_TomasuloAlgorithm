@@ -14,14 +14,28 @@
             Driver file for Tomasulo algorithm
 ######################################################################################################################
 This program follows the algorithm as stated by the following sources;
-Computer Architecture : A Quantitative Approach (5th Edition) by Hennessy, John L., Patterson, David A.
-https://en.wikipedia.org/wiki/Tomasulo_algorithm#Implementation_concepts
-Dr. Chandra CPP
+1. Computer Architecture : A Quantitative Approach (5th Edition) by Hennessy, John L., Patterson, David A.
+2. https://en.wikipedia.org/wiki/Tomasulo_algorithm#Implementation_concepts
+3. Dr. Chandra CPP
 
 ALGORITHM:
     ISSUE
+        if reservation station for given instruction is available then issue to that reservation station
+        there is a 1 cycle delay for issue
+        else wait until one is available
     EXECUTE
+        if both operands for an issued instruction are available then start execution of that operation
+        there will be a given operational delay for each executed instruction
+        after delay make result available to be written back into regs and RS's
     WRITEBACK
+        when result for a given instruction is ready write the result back to the common data bus
+        which gives the register and any RS's waiting for that result access to it
+        there is a 1 cycle delay for writeback
+
+INSTRUCTIONS FOR USE OF THIS PROGRAM:
+    1. Define the constants for the # of Reservation Stations && initialze RS objects
+    2. Add the desired MIPS style Instruction objects
+    3. Define latency's
  */
 
 #include <iostream>
@@ -36,9 +50,9 @@ using namespace std;
 //####################################################################################################################
 //*** Define Architecture
 // RESERVATION STATION NUMBER
-const int Num_ADD_RS = 1;
-const int Num_MULT_RS = 1;
-const int Num_DIV_RS = 1;
+const int Num_ADD_RS = 4;
+const int Num_MULT_RS = 2;
+const int Num_DIV_RS = 3;
 // RESERVATION STATION LATENCY
 const int ADD_Lat = 4;
 const int MULT_Lat = 12;
@@ -101,20 +115,19 @@ int main(){
     //const int Num_MULT_RS = 2;
     //const int Num_DIV_RS = 3;
     ReservationStation
-            ADD1(AddOp, OperandInit);
-            //ADD2(AddOp, OperandInit),
-            //ADD3(AddOp, OperandInit),
-            //ADD4(AddOp, OperandInit);
+            ADD1(AddOp, OperandInit),
+            ADD2(AddOp, OperandInit),
+            ADD3(AddOp, OperandInit),
+            ADD4(AddOp, OperandInit);
     ReservationStation
-            MULT1(MultOp, OperandInit);
-            //MULT2(MultOp, OperandInit);
+            MULT1(MultOp, OperandInit),
+            MULT2(MultOp, OperandInit);
     ReservationStation
-            DIV1(DivOp, OperandInit);
-            //DIV2(DivOp, OperandInit),
-            //DIV3(DivOp, OperandInit);
+            DIV1(DivOp, OperandInit),
+            DIV2(DivOp, OperandInit),
+            DIV3(DivOp, OperandInit);
     // Pack reservation stations into vector
-    //ADD2, ADD3, ADD4, MULT2,DIV2, DIV3
-    vector<ReservationStation> ResStation = {ADD1,  MULT1,  DIV1};
+    vector<ReservationStation> ResStation = {ADD1, ADD2, ADD3, ADD4,MULT1, MULT2, DIV1, DIV2, DIV3};
 
     // Initialize register status objects
     RegisterStatus
