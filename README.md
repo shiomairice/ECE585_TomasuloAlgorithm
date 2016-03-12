@@ -12,11 +12,17 @@ This program has been tested for the given example with several differnt reserva
 #INSTRUCTIONS FOR USE OF THIS PROGRAM:
 ##SETUP:
 1. Define datapath architecture
+
  a. Define the constants for the # of Reservation Stations && initialze RS objects
+
  b. Define latency's
+ 
 2. INIT PROGRAM:
+
  a.Input the MIPS like instructions to your given program
+ 
 3. OUTPUT:
+
  a. Displays the register content each clock cycle
  b. Displays the timing of the ISSUE EXECUTE WRITEBACK at each clock cycle
 
