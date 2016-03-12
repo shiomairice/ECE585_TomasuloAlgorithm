@@ -12,31 +12,9 @@
 
   Purpose:  ECE 585 Tomasulo Algorithm
             Driver file for Tomasulo algorithm
+  TODO: Implement LW/SW
 ######################################################################################################################
-This program follows the algorithm as stated by the following sources;
-1. Computer Architecture : A Quantitative Approach (5th Edition) by Hennessy, John L., Patterson, David A.
-2. https://en.wikipedia.org/wiki/Tomasulo_algorithm#Implementation_concepts
-3. Dr. Chandra CPP
-
-ALGORITHM:
-    ISSUE
-        if reservation station for given instruction is available then issue to that reservation station
-        there is a 1 cycle delay for issue
-        else wait until one is available
-    EXECUTE
-        if both operands for an issued instruction are available then start execution of that operation
-        there will be a given operational delay for each executed instruction
-        after delay make result available to be written back into regs and RS's
-    WRITEBACK
-        when result for a given instruction is ready write the result back to the common data bus
-        which gives the register and any RS's waiting for that result access to it
-        there is a 1 cycle delay for writeback
-
-INSTRUCTIONS FOR USE OF THIS PROGRAM:
-    1. Define the constants for the # of Reservation Stations && initialze RS objects
-    2. Add the desired MIPS style Instruction objects
-    3. Define latency's
- */
+*/
 
 #include <iostream>
 #include <iomanip>          // Print Table Formatting
