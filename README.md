@@ -2,7 +2,7 @@
 ##C++ Tomasulo Algorithm Simulator
 **Author:   Arthur J. Miller**
 
-Full project can be found at github.com/milleraj66/ECE585_TomasuloAlgorithm
+Full project can be found on [github](github.com/milleraj66/ECE585_TomasuloAlgorithm)
 
 Date:
  Start:  03-01-2016
