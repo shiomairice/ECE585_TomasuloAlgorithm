@@ -7,7 +7,8 @@
             Start:  03-01-2016
             Update: 03-08-2016
             Update: 03-09-2016
-            final:  03-10-2016
+            Update:  03-10-2016
+            Final:  03-11-2016
 
   Purpose:  ECE 585 Tomasulo Algorithm
             Driver file for Tomasulo algorithm
@@ -18,56 +19,9 @@ https://en.wikipedia.org/wiki/Tomasulo_algorithm#Implementation_concepts
 Dr. Chandra CPP
 
 ALGORITHM:
-	ISSUE:
-		// DELAY: 1 Clock
-		// determine reservation station destination for given instruction
-	    // r is the given reservation station
-	    Switch(INST.op):
-		case(add):  r=add; 	goto ISSUE
-		case(mult): r= mult; 	goto ISSUE
-		case(div):  r = div;	goto ISSUE
-		// check if spot in given reservation station is available
-		if(RS[r].busy = false):
-			// if operand rs is available -> set value of operand (Vj) to given register value
-			// else point operand to the reservation station (Qj) that will give the operand value
-			if(RegStatus[rs].Qi == 0):
-				RS[r].Vj = Reg[rs]; RS[r].Qj = 0;
-			else
-				RS[r].Qj = RegStatus[r].Qi;
-			// if operand rt is available -> set value of operand (Vk) to given register value
-			// else point operand to the reservation station (Qk) that will give the operand value
-			if(RegStatus[rt].Qi == 0):
-				RS[r].Vj = Reg[rt]; RS[r].Qj = 0;
-			else
-				RS[r].Qj = RegStatus[r].Qi;
-		// given reservation station is now busy until write back stage is completed.
-		RS[r].busy = true; RegStatus[rd].Qi = true
-	EXECUTE:
- 		// check each reservation station to see if both operands are ready
-		// Delay: Switch(INST.op)
-		//		case(add): 	clock += 4;
-		//		case(mult): 	clock += 12;
-		//		case(div):	clock += 38;
-		// wait for both operands to be available and execute given instructions operation
-		if(RS[r].Qj == 0 && RS[r].Qk == 0):
-			switch(INST.op):
-				case(add):	temp = Vj +- Vk
-				case(mult):	temp = Vj * Vk
-				case(div):	temp = Vj / Vk
-	WRITEBACK:
- 		// Check each reservation station to see if operaional delay is done -> result is ready
-		// Delay: 1 clock
-		// for all x registers
-		// if RegStatus points to the given reservation station r set that register[x] equal to executed result	
-		if(RegStatus[x].Qi==r):
-			Reg[x] = temp; RegStatus[x].Qi = false;
-		// check if any reservation stations are waiting for the given result as an operand	
-		if(RS[x].Qj==r):
-			RS[x].Vi=temp; RS[x].Qj=false;
-		if(RS[x].Qk==r):
-			RS[x].Vk=temp; RS[x].Qk=false;
-		// The given reservation station is can now be used again		
-		RS[r].busy = false;
+    ISSUE
+    EXECUTE
+    WRITEBACK
  */
 
 #include <iostream>
@@ -82,9 +36,9 @@ using namespace std;
 //####################################################################################################################
 //*** Define Architecture
 // RESERVATION STATION NUMBER
-const int Num_ADD_RS = 4;
-const int Num_MULT_RS = 2;
-const int Num_DIV_RS = 3;
+const int Num_ADD_RS = 1;
+const int Num_MULT_RS = 1;
+const int Num_DIV_RS = 1;
 // RESERVATION STATION LATENCY
 const int ADD_Lat = 4;
 const int MULT_Lat = 12;
@@ -95,6 +49,7 @@ const int WRITEBACK_Lat = 1;
 // Global Clock
 int Clock = 0;
 bool Done = true;
+int Total_WRITEBACKS = 0; // used to check if INST == WRITEBACKS to end program
 // Opcode Values
 const int AddOp = 0;
 const int SubOp = 1;
@@ -146,19 +101,20 @@ int main(){
     //const int Num_MULT_RS = 2;
     //const int Num_DIV_RS = 3;
     ReservationStation
-            ADD1(AddOp, OperandInit),
-            ADD2(AddOp, OperandInit),
-            ADD3(AddOp, OperandInit),
-            ADD4(AddOp, OperandInit);
+            ADD1(AddOp, OperandInit);
+            //ADD2(AddOp, OperandInit),
+            //ADD3(AddOp, OperandInit),
+            //ADD4(AddOp, OperandInit);
     ReservationStation
-            MULT1(MultOp, OperandInit),
-            MULT2(MultOp, OperandInit);
+            MULT1(MultOp, OperandInit);
+            //MULT2(MultOp, OperandInit);
     ReservationStation
-            DIV1(DivOp, OperandInit),
-            DIV2(DivOp, OperandInit),
-            DIV3(DivOp, OperandInit);
+            DIV1(DivOp, OperandInit);
+            //DIV2(DivOp, OperandInit),
+            //DIV3(DivOp, OperandInit);
     // Pack reservation stations into vector
-    vector<ReservationStation> ResStation = {ADD1, ADD2, ADD3, ADD4, MULT1, MULT2, DIV1, DIV2, DIV3};
+    //ADD2, ADD3, ADD4, MULT2,DIV2, DIV3
+    vector<ReservationStation> ResStation = {ADD1,  MULT1,  DIV1};
 
     // Initialize register status objects
     RegisterStatus
@@ -194,14 +150,10 @@ int main(){
         cout << endl;
 
         // Check if all reservation stations are empty -> program done
-        Done = true;
-        for(int i=0;i<ResStation.size();i++){
-            cout << ResStation[i].busy << " ";
-            if(ResStation[i].busy == true){
-                Done = false;
-                break;
-            }
-        }
+        // TODO: if LW/SW are added this will need to be udated
+        Done = false;
+        if(Total_WRITEBACKS == Inst.size())
+            Done = true;
         cout << endl;
 	}while(!Done);//**** End functional loop
 
@@ -426,6 +378,7 @@ void WRITEBACK(vector<Instruction>& INST, vector<ReservationStation>& RESSTATION
                 RESSTATION[r].Vj = 0;
                 RESSTATION[r].Vk = 0;
                 RESSTATION[r].WRITEBACK_Lat = 0;
+                Total_WRITEBACKS++;
             }
             else
                 RESSTATION[r].WRITEBACK_Lat++;
