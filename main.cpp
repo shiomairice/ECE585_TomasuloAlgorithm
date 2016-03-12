@@ -197,13 +197,13 @@ int main(){
         Done = true;
         for(int i=0;i<ResStation.size();i++){
             cout << ResStation[i].busy << " ";
-            if(ResStation[i].busy == 1){
+            if(ResStation[i].busy == true){
                 Done = false;
                 break;
             }
         }
         cout << endl;
-	}while(Clock<50);//**** End functional loop
+	}while(!Done);//**** End functional loop
 
     return 0;
 }//**** END MAIN DRIVER
@@ -218,7 +218,7 @@ int ISSUE(vector<Instruction>& INST, vector<ReservationStation>& RESSTATION, vec
     bool rsFree = false;
     // r is the current instruction to be issued's operation code(add,sub,mult,div)
     // If all instructions have been issued then stop issueing for rest of program
-    if(currentInst_ISSUE > INST.size())
+    if(currentInst_ISSUE >= INST.size())
             return 0;
     r = INST[currentInst_ISSUE].op;
     // determine if there is an open RS of r type. if yes -> r = that open spot.
