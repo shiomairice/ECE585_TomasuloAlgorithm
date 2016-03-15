@@ -20,36 +20,36 @@ ___
 
  a. Define the constants for the # of Reservation Stations
      
-     >// NUMBER OF RESERVATION STATIONS
-     >const int Num_ADD_RS = 4;
-     >const int Num_MULT_RS = 2;
-     >const int Num_DIV_RS = 3;
+     // NUMBER OF RESERVATION STATIONS
+     const int Num_ADD_RS = 4;
+     const int Num_MULT_RS = 2;
+     const int Num_DIV_RS = 3;
  
  b. Define latency's
     
-    >// RESERVATION STATION LATENCY
-    >const int ADD_Lat = 4;
-    >const int MULT_Lat = 12;
-    >const int DIV_Lat = 38;
-    >// Datapath Latency
-    >const int ISSUE_Lat = 1;
-    >const int WRITEBACK_Lat = 1;
+    // RESERVATION STATION LATENCY
+    const int ADD_Lat = 4;
+    const int MULT_Lat = 12;
+    const int DIV_Lat = 38;
+    // Datapath Latency
+    const int ISSUE_Lat = 1;
+    const int WRITEBACK_Lat = 1;
     
  c. Initialize Reservation Station Objects
  
-     >//// Input reservation station architecture
-     >ReservationStation
-     >        ADD1(AddOp, OperandInit),
-     >        ADD2(AddOp, OperandInit),
-     >        ADD3(AddOp, OperandInit),
-     >        ADD4(AddOp, OperandInit);
-     >ReservationStation
-     >        MULT1(MultOp, OperandInit),
-     >        MULT2(MultOp, OperandInit);
-     >ReservationStation
-     >        DIV1(DivOp, OperandInit),
-     >        DIV2(DivOp, OperandInit),
-     >        DIV3(DivOp, OperandInit);
+     //// Input reservation station architecture
+     ReservationStation
+             ADD1(AddOp, OperandInit),
+             ADD2(AddOp, OperandInit),
+             ADD3(AddOp, OperandInit),
+             ADD4(AddOp, OperandInit);
+     ReservationStation
+             MULT1(MultOp, OperandInit),
+             MULT2(MultOp, OperandInit);
+     ReservationStation
+             DIV1(DivOp, OperandInit),
+             DIV2(DivOp, OperandInit),
+             DIV3(DivOp, OperandInit);
      
 ** Note: Currently only 12 registers are being used. To add more registers to the architecture
 you must edit both the `RegisterStatus` objects and `Register` objects  **
