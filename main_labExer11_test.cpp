@@ -38,11 +38,11 @@ const int MultOp = 2;
 const int DivOp = 3;
 const int LoadOp = 4;
 // RESERVATION STATION LATENCY
-const int ADD_Lat = 2;
+const int ADD_Lat = 5;
 const int SUB_Lat = 2;
-const int MULT_Lat = 10;
-const int DIV_Lat = 40;
-const int LOAD_Lat = 2;
+const int MULT_Lat = 12;
+const int DIV_Lat = 1;
+const int LOAD_Lat = 1;
 // Datapath Latency
 const int ISSUE_Lat = 1;
 const int WRITEBACK_Lat = 1;
@@ -91,14 +91,15 @@ int main(){
     // Input program instructions
     Instruction
             //(rd,rs,rt,opcode)
-            I0(6,12+4,12+2,LoadOp),
-            I1(2,12+5,12+3,LoadOp),
-            I2(0,2,4,MultOp),
-            I3(8,6,2,SubOp),
-            I4(10,0,6,DivOp),
-            I5(6,8,2,AddOp);
+            I0(6,12+4,12+1,LoadOp),
+            I1(5,12+5,12+2,LoadOp),
+            I2(3,12+6,12+3,LoadOp),
+            I3(3,1,2,MultOp),
+            I4(5,4,3,AddOp),
+            I5(6,8,9,MultOp),
+            I6(10,5,6,MultOp);
     // Pack Instructions into vector
-    vector<Instruction> Inst = {I0,I1,I2,I3,I4,I5};
+    vector<Instruction> Inst = {I0,I1,I2,I3,I4,I5,I6};
 
     //// Input reservation station architecture
     // DONT FORGET TO UPDATE ^
@@ -369,7 +370,7 @@ void EXECUTE(vector<Instruction>& INST,
                             }
                             break;
                         case(SubOp):
-                            if(RESSTATION[r].lat == SUB_Lat){
+                            if(RESSTATION[r].lat == ADD_Lat){
                                 RESSTATION[r].result = RESSTATION[r].Vj - RESSTATION[r].Vk;
                                 RESSTATION[r].resultReady = true;
                                 RESSTATION[r].lat = 0;
@@ -391,7 +392,7 @@ void EXECUTE(vector<Instruction>& INST,
                             }
                             break;
                         case(DivOp):
-                            if(RESSTATION[r].lat == DIV_Lat){
+                            if(RESSTATION[r].lat == MULT_Lat){
                                 RESSTATION[r].result = RESSTATION[r].Vj / RESSTATION[r].Vk;
                                 RESSTATION[r].resultReady = true;
                                 RESSTATION[r].lat = 0;
